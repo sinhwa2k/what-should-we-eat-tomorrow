@@ -37,6 +37,7 @@ function Header() {
 }
 
 export default function App() {
+  const { pathname } = useLocation()
   if (!configured) {
     return (
       <Typography sx={{ p: 3 }}>
@@ -46,17 +47,24 @@ export default function App() {
   }
   return (
     <Box sx={{ minHeight: '100dvh' }}>
-      <Header />
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      {pathname.startsWith('/dish/') ? (
         <Routes>
-          <Route path="/" element={<Navigate to={`/day/${toISO(new Date())}`} replace />} />
-          <Route path="/day/:date" element={<DayPage />} />
-          <Route path="/month" element={<MonthPage />} />
-          <Route path="/month/:ym" element={<MonthPage />} />
-          <Route path="/dishes" element={<DishesPage />} />
           <Route path="/dish/:id" element={<DishPage />} />
         </Routes>
-      </Container>
+      ) : (
+        <>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: 2 }}>
+            <Routes>
+              <Route path="/" element={<Navigate to={`/day/${toISO(new Date())}`} replace />} />
+              <Route path="/day/:date" element={<DayPage />} />
+              <Route path="/month" element={<MonthPage />} />
+              <Route path="/month/:ym" element={<MonthPage />} />
+              <Route path="/dishes" element={<DishesPage />} />
+            </Routes>
+          </Container>
+        </>
+      )}
     </Box>
   )
 }

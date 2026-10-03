@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Alert, Box, Button, Card, CardContent, CardMedia, Stack, TextField, Typography } from '@mui/material'
+import { Alert, AppBar, Box, Button, Card, CardContent, CardMedia, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
 import ArrowBack from '@mui/icons-material/ArrowBack'
 import Edit from '@mui/icons-material/Edit'
 import Save from '@mui/icons-material/Save'
@@ -56,22 +56,30 @@ export default function DishPage() {
   }
 
   return (
-    <div>
+    <>
+      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Container maxWidth="sm" disableGutters>
+          <Toolbar>
+            <IconButton edge="start" aria-label="뒤로" onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav('/'))}>
+              <ArrowBack />
+            </IconButton>
+            <Typography variant="h6" noWrap sx={{ flex: 1, mx: 1 }}>
+              {dish.name}
+            </Typography>
+            {editing ? (
+              <Button variant="contained" startIcon={<Save />} onClick={save}>
+                저장
+              </Button>
+            ) : (
+              <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)}>
+                편집
+              </Button>
+            )}
+          </Toolbar>
+        </Container>
+      </AppBar>
+      <Container maxWidth="sm" sx={{ py: 2 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <Stack direction="row" sx={{ mb: 2, justifyContent: 'space-between' }}>
-        <Button startIcon={<ArrowBack />} onClick={() => nav(-1)}>
-          뒤로
-        </Button>
-        {editing ? (
-          <Button variant="contained" startIcon={<Save />} onClick={save}>
-            저장
-          </Button>
-        ) : (
-          <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)}>
-            편집
-          </Button>
-        )}
-      </Stack>
 
       {editing ? (
         <TextField
@@ -155,6 +163,7 @@ export default function DishPage() {
           메뉴 삭제
         </Button>
       )}
-    </div>
+      </Container>
+    </>
   )
 }
