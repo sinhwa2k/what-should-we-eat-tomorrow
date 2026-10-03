@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Alert, AppBar, Box, Button, Card, CardContent, CardMedia, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
 import ArrowBack from '@mui/icons-material/ArrowBack'
@@ -25,6 +25,10 @@ export default function DishPage() {
   const [dish, setDish] = useState<Dish | null>(() => readCache<Dish>(key) ?? null)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [id])
 
   useEffect(() => {
     getDish(id)
@@ -63,38 +67,33 @@ export default function DishPage() {
             <IconButton edge="start" aria-label="뒤로" onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav('/'))}>
               <ArrowBack />
             </IconButton>
-            <Typography variant="h6" color="primary" sx={{ ml: 1 }}>
-              내일뭐먹지
+            <Typography variant="h6" noWrap sx={{ flex: 1, mx: 1 }}>
+              {dish.name}
             </Typography>
+            {editing ? (
+              <Button variant="contained" startIcon={<Save />} onClick={save}>
+                저장
+              </Button>
+            ) : (
+              <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)}>
+                편집
+              </Button>
+            )}
           </Toolbar>
         </Container>
       </AppBar>
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth="sm" sx={{ pt: 2, pb: 12 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2, alignItems: 'center' }}>
-        {editing ? (
-          <TextField
-            fullWidth
-            label="메뉴 이름"
-            value={dish.name}
-            onChange={(e) => setDish({ ...dish, name: e.target.value })}
-          />
-        ) : (
-          <Typography variant="h4" sx={{ flex: 1, wordBreak: 'break-word' }}>
-            {dish.name}
-          </Typography>
-        )}
-        {editing ? (
-          <Button variant="contained" startIcon={<Save />} onClick={save} sx={{ flexShrink: 0 }}>
-            저장
-          </Button>
-        ) : (
-          <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)} sx={{ flexShrink: 0 }}>
-            편집
-          </Button>
-        )}
-      </Stack>
+      {editing && (
+        <TextField
+          fullWidth
+          label="메뉴 이름"
+          value={dish.name}
+          onChange={(e) => setDish({ ...dish, name: e.target.value })}
+          sx={{ mb: 2 }}
+        />
+      )}
 
       {dish.photo_url && (
         <Card variant="outlined" sx={{ mb: 2 }}>

@@ -54,7 +54,7 @@ export default function App() {
       ) : (
         <>
           <Header />
-          <Container maxWidth="sm" sx={{ py: 2 }}>
+          <Container maxWidth="sm" sx={{ pt: 2, pb: 12 }}>
             <Routes>
               <Route path="/" element={<Navigate to={`/day/${toISO(new Date())}`} replace />} />
               <Route path="/day/:date" element={<DayPage />} />
