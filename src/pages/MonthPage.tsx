@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Alert, Box, Paper, Typography } from '@mui/material'
 import { getRange } from '../lib/api'
 import { toISO } from '../lib/date'
+import { Pager } from '../components'
 import type { MealPlan } from '../lib/types'
 
 const HEAD = ['일', '월', '화', '수', '목', '금', '토']
@@ -38,52 +40,55 @@ export default function MonthPage() {
     ...Array.from({ length: last.getDate() }, (_, i) => i + 1),
   ]
   const today = toISO(now)
+  const isCurrent = y === now.getFullYear() && m === now.getMonth() + 1
 
   return (
     <div>
-      <header className="mb-3 flex items-center justify-between">
-        <button className="p-2 text-2xl" onClick={() => go(-1)}>‹</button>
-        <h1 className="text-xl font-bold">{y}년 {m}월</h1>
-        <button className="p-2 text-2xl" onClick={() => go(1)}>›</button>
-      </header>
-      {!(y === now.getFullYear() && m === now.getMonth() + 1) && (
-        <div className="mb-3 text-center">
-          <button className="rounded-full border px-3 py-1 text-sm" onClick={() => nav('/month')}>오늘로</button>
-        </div>
-      )}
-      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-      <div className="grid grid-cols-7 items-stretch gap-px overflow-hidden rounded-xl border bg-gray-200 text-xs">
-        {HEAD.map((h) => (
-          <div key={h} className="bg-gray-50 py-1 text-center font-bold">{h}</div>
+      <Pager title={`${y}년 ${m}월`} onPrev={() => go(-1)} onNext={() => go(1)} onToday={isCurrent ? undefined : () => nav('/month')} />
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Paper
+        variant="outlined"
+        sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '1px', bgcolor: 'divider', overflow: 'hidden' }}
+      >
+        {HEAD.map((h, i) => (
+          <Box key={h} sx={{ bgcolor: 'grey.100', py: 0.5, textAlign: 'center', typography: 'caption', fontWeight: 700, color: i === 0 ? 'error.main' : 'text.primary' }}>
+            {h}
+          </Box>
         ))}
         {cells.map((day, i) => {
-          if (!day) return <div key={i} className="bg-white" />
+          if (!day) return <Box key={i} sx={{ bgcolor: 'background.paper' }} />
           const date = toISO(new Date(y, m - 1, day))
+          const isToday = date === today
           const names = (slot: string) =>
             plans.find((p) => p.date === date && p.slot === slot)?.meal_items.map((it) => it.label) ?? []
           return (
-            <Link
+            <Box
               key={i}
+              component={Link}
               to={`/day/${date}`}
-              className={`min-h-24 min-w-0 bg-white p-1 ${date === today ? 'bg-orange-50' : ''}`}
+              sx={{ minHeight: 96, minWidth: 0, p: 0.5, bgcolor: isToday ? '#fff3e0' : 'background.paper', color: 'text.primary', textDecoration: 'none' }}
             >
-              <div className={`font-bold ${date === today ? 'text-orange-600' : ''}`}>{day}</div>
-              <div className="space-y-1 text-[11px] leading-tight text-gray-600">
+              <Typography variant="caption" sx={{ fontWeight: 700 }} color={isToday ? 'primary' : 'text.primary'}>
+                {day}
+              </Typography>
+              <Box sx={{ fontSize: 11, lineHeight: 1.25, color: 'text.secondary' }}>
                 {(['lunch', 'dinner'] as const).map((slot) =>
                   names(slot).length > 0 ? (
-                    <div key={slot}>
+                    <Box key={slot} sx={{ mt: 0.5 }}>
                       <span>{slot === 'lunch' ? '🌞' : '🌙'}</span>
                       {names(slot).map((n, k) => (
-                        <p key={k} className="break-words">{n}</p>
+                        <Box key={k} sx={{ wordBreak: 'break-word' }}>
+                          {n}
+                        </Box>
                       ))}
-                    </div>
+                    </Box>
                   ) : null,
                 )}
-              </div>
-            </Link>
+              </Box>
+            </Box>
           )
         })}
-      </div>
+      </Paper>
     </div>
   )
 }

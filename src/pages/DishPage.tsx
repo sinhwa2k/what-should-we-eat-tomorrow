@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { Alert, Box, Button, Card, CardContent, CardMedia, Stack, TextField, Typography } from '@mui/material'
+import ArrowBack from '@mui/icons-material/ArrowBack'
+import Edit from '@mui/icons-material/Edit'
+import Save from '@mui/icons-material/Save'
+import AddAPhoto from '@mui/icons-material/AddAPhoto'
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined'
 import { deleteDish, getDish, updateDish, uploadPhoto } from '../lib/api'
+import { useConfirm } from '../lib/confirm'
 import type { Dish } from '../lib/types'
 
 const FIELDS: { key: 'ingredients' | 'recipe' | 'memo'; title: string; rows: number }[] = [
@@ -12,6 +19,7 @@ const FIELDS: { key: 'ingredients' | 'recipe' | 'memo'; title: string; rows: num
 export default function DishPage() {
   const { id = '' } = useParams()
   const nav = useNavigate()
+  const confirm = useConfirm()
   const [dish, setDish] = useState<Dish | null>(null)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
@@ -20,8 +28,8 @@ export default function DishPage() {
     getDish(id).then(setDish).catch((e) => setError(e.message))
   }, [id])
 
-  if (!dish && error) return <p className="text-red-600">{error}</p>
-  if (!dish) return <p>불러오는 중…</p>
+  if (!dish && error) return <Alert severity="error">{error}</Alert>
+  if (!dish) return <Typography>불러오는 중…</Typography>
 
   async function save() {
     if (!dish) return
@@ -33,6 +41,7 @@ export default function DishPage() {
         memo: dish.memo,
       })
       setEditing(false)
+      setError('')
     } catch (e) {
       setError((e as Error).message)
     }
@@ -40,37 +49,51 @@ export default function DishPage() {
 
   return (
     <div>
-      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-      <div className="mb-4 flex items-center justify-between">
-        <button onClick={() => nav(-1)} className="p-2">‹ 뒤로</button>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Stack direction="row" sx={{ mb: 2, justifyContent: 'space-between' }}>
+        <Button startIcon={<ArrowBack />} onClick={() => nav(-1)}>
+          뒤로
+        </Button>
         {editing ? (
-          <button onClick={save} className="rounded-xl bg-orange-500 px-4 py-2 text-white">저장</button>
+          <Button variant="contained" startIcon={<Save />} onClick={save}>
+            저장
+          </Button>
         ) : (
-          <button onClick={() => setEditing(true)} className="rounded-xl border px-4 py-2">편집</button>
+          <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)}>
+            편집
+          </Button>
         )}
-      </div>
+      </Stack>
+
       {editing ? (
-        <input
-          className="mb-4 w-full rounded-xl border px-3 py-2 text-xl font-bold"
+        <TextField
+          fullWidth
+          label="메뉴 이름"
           value={dish.name}
           onChange={(e) => setDish({ ...dish, name: e.target.value })}
+          sx={{ mb: 2 }}
         />
       ) : (
-        <h1 className="mb-4 text-2xl font-bold">{dish.name}</h1>
+        <Typography variant="h4" sx={{ mb: 2 }}>
+          {dish.name}
+        </Typography>
       )}
+
       {dish.photo_url && (
-        <img src={dish.photo_url} alt={dish.name} className="mb-4 w-full rounded-2xl object-cover" />
+        <Card variant="outlined" sx={{ mb: 2 }}>
+          <CardMedia component="img" image={dish.photo_url} alt={dish.name} sx={{ maxHeight: 360, objectFit: 'cover' }} />
+        </Card>
       )}
       {editing && (
-        <label className="mb-4 block rounded-xl border border-dashed px-4 py-3 text-center text-sm">
+        <Button component="label" variant="outlined" fullWidth startIcon={<AddAPhoto />} sx={{ mb: 2 }}>
           {dish.photo_url ? '사진 바꾸기' : '사진 추가 (촬영/앨범)'}
           <input
             type="file"
             accept="image/*"
-            className="hidden"
+            hidden
             onChange={async (e) => {
               const f = e.target.files?.[0]
-              if (!f || !dish) return
+              if (!f) return
               try {
                 const url = await uploadPhoto(dish.id, f)
                 setDish({ ...dish, photo_url: url })
@@ -79,37 +102,48 @@ export default function DishPage() {
               }
             }}
           />
-        </label>
+        </Button>
       )}
-      {FIELDS.map(({ key, title, rows }) => (
-        <section key={key} className="mb-4">
-          <h2 className="mb-1 font-bold text-orange-600">{title}</h2>
-          {editing ? (
-            <textarea
-              rows={rows}
-              className="w-full rounded-xl border px-3 py-2"
-              value={dish[key] ?? ''}
-              onChange={(e) => setDish({ ...dish, [key]: e.target.value })}
-            />
-          ) : (
-            <p className="whitespace-pre-wrap text-lg leading-relaxed">
-              {dish[key] || <span className="text-gray-400">없음</span>}
-            </p>
-          )}
-        </section>
-      ))}
+
+      <Stack spacing={2}>
+        {FIELDS.map(({ key, title, rows }) => (
+          <Card key={key} variant="outlined">
+            <CardContent>
+              <Typography variant="subtitle1" color="primary" gutterBottom>
+                {title}
+              </Typography>
+              {editing ? (
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={rows}
+                  value={dish[key] ?? ''}
+                  onChange={(e) => setDish({ ...dish, [key]: e.target.value })}
+                />
+              ) : (
+                <Box sx={{ whiteSpace: 'pre-wrap', fontSize: 18, lineHeight: 1.7 }}>
+                  {dish[key] || <Typography color="text.disabled">없음</Typography>}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+
       {editing && (
-        <button
-          className="mt-4 text-sm text-red-600"
+        <Button
+          color="error"
+          startIcon={<DeleteOutlined />}
+          sx={{ mt: 3 }}
           onClick={async () => {
-            if (confirm('이 메뉴를 삭제할까요? 식단에는 이름만 남습니다.')) {
+            if (await confirm('이 메뉴를 삭제할까요? 식단에는 이름만 남습니다.', { title: '메뉴 삭제', confirmText: '삭제' })) {
               await deleteDish(dish.id)
               nav('/dishes')
             }
           }}
         >
           메뉴 삭제
-        </button>
+        </Button>
       )}
     </div>
   )

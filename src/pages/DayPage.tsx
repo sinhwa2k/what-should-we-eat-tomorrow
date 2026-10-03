@@ -1,7 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import {
+  Alert,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import Close from '@mui/icons-material/Close'
+import Add from '@mui/icons-material/Add'
 import { addItem, createDish, getDay, listDishes, removeItem } from '../lib/api'
 import { label, shift, toISO } from '../lib/date'
+import { useConfirm } from '../lib/confirm'
+import { Pager } from '../components'
 import type { Dish, MealPlan, Slot } from '../lib/types'
 
 const SLOTS: { slot: Slot; title: string }[] = [
@@ -12,6 +31,7 @@ const SLOTS: { slot: Slot; title: string }[] = [
 export default function DayPage() {
   const { date = '' } = useParams()
   const nav = useNavigate()
+  const confirm = useConfirm()
   const [plans, setPlans] = useState<MealPlan[]>([])
   const [error, setError] = useState('')
 
@@ -28,53 +48,67 @@ export default function DayPage() {
     load()
   }, [load])
 
+  const today = toISO(new Date())
+
   return (
     <div>
-      <header className="mb-4 flex items-center justify-between">
-        <button className="p-2 text-2xl" onClick={() => nav(`/day/${shift(date, -1)}`)}>‹</button>
-        <h1 className="text-xl font-bold">{label(date)}</h1>
-        <button className="p-2 text-2xl" onClick={() => nav(`/day/${shift(date, 1)}`)}>›</button>
-      </header>
-      {date !== toISO(new Date()) && (
-        <div className="mb-3 text-center">
-          <button className="rounded-full border px-3 py-1 text-sm" onClick={() => nav(`/day/${toISO(new Date())}`)}>오늘로</button>
-        </div>
-      )}
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-      <div className="space-y-4">
+      <Pager
+        title={label(date)}
+        onPrev={() => nav(`/day/${shift(date, -1)}`)}
+        onNext={() => nav(`/day/${shift(date, 1)}`)}
+        onToday={date !== today ? () => nav(`/day/${today}`) : undefined}
+      />
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Stack spacing={2}>
         {SLOTS.map(({ slot, title }) => {
           const items = plans.find((p) => p.slot === slot)?.meal_items ?? []
           return (
-            <section key={slot} className="rounded-2xl border bg-orange-50 p-4">
-              <h2 className="mb-3 font-bold">{title}</h2>
-              <ul className="space-y-2">
-                {items.map((it) => (
-                  <li key={it.id} className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-lg">
-                    {it.dish_id ? (
-                      <Link to={`/dish/${it.dish_id}`} className="flex-1">{it.label}</Link>
-                    ) : (
-                      <span className="flex-1">{it.label}</span>
-                    )}
-                    <button
-                      className="px-2 text-gray-400"
-                      aria-label="삭제"
-                      onClick={async () => {
-                        if (!confirm(`'${it.label}'을(를) 식단에서 삭제할까요?`)) return
-                        await removeItem(it.id)
-                        load()
-                      }}
+            <Card key={slot} sx={{ bgcolor: 'primary.50', backgroundColor: '#fff3e0' }}>
+              <CardContent>
+                <Typography variant="subtitle1" gutterBottom>
+                  {title}
+                </Typography>
+                <List disablePadding sx={{ '& > li': { mb: 1 } }}>
+                  {items.map((it) => (
+                    <ListItem
+                      key={it.id}
+                      disablePadding
+                      sx={{ bgcolor: 'background.paper', borderRadius: 3 }}
+                      secondaryAction={
+                        <IconButton
+                          edge="end"
+                          aria-label="삭제"
+                          onClick={async () => {
+                            if (!(await confirm(`'${it.label}'을(를) 식단에서 삭제할까요?`, { title: '메뉴 삭제', confirmText: '삭제' }))) return
+                            await removeItem(it.id)
+                            load()
+                          }}
+                        >
+                          <Close />
+                        </IconButton>
+                      }
                     >
-                      ✕
-                    </button>
-                  </li>
-                ))}
-                {items.length === 0 && <li className="text-sm text-gray-400">비어 있음</li>}
-              </ul>
-              <AddItem date={date} slot={slot} onAdded={load} />
-            </section>
+                      {it.dish_id ? (
+                        <ListItemButton component={Link} to={`/dish/${it.dish_id}`} sx={{ borderRadius: 3 }}>
+                          <ListItemText primary={it.label} slotProps={{ primary: { sx: { fontSize: 18 } } }} />
+                        </ListItemButton>
+                      ) : (
+                        <ListItemText sx={{ px: 2, py: 1 }} primary={it.label} slotProps={{ primary: { sx: { fontSize: 18 } } }} />
+                      )}
+                    </ListItem>
+                  ))}
+                  {items.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      비어 있음
+                    </Typography>
+                  )}
+                </List>
+                <AddItem date={date} slot={slot} onAdded={load} />
+              </CardContent>
+            </Card>
           )
         })}
-      </div>
+      </Stack>
     </div>
   )
 }
@@ -113,35 +147,33 @@ function AddItem({ date, slot, onAdded }: { date: string; slot: Slot; onAdded: (
   }
 
   return (
-    <div className="mt-3">
+    <div>
       <form
-        className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault()
           submit(text, null)
         }}
       >
-        <input
-          className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2"
-          placeholder="메뉴 추가 (이전 메뉴 검색)"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button className="rounded-xl bg-orange-500 px-4 py-2 text-white">추가</button>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            fullWidth
+            sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
+            placeholder="메뉴 추가 (이전 메뉴 검색)"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <Button type="submit" variant="contained" startIcon={<Add />} sx={{ flexShrink: 0 }}>
+            추가
+          </Button>
+        </Stack>
       </form>
       {suggestions.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-2">
+        <Stack direction="row" useFlexGap sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
           {suggestions.map((d) => (
-            <li key={d.id}>
-              <button
-                className="rounded-full border bg-white px-3 py-1 text-sm"
-                onClick={() => submit(d.name, d.id)}
-              >
-                {d.name}
-              </button>
-            </li>
+            <Chip key={d.id} label={d.name} onClick={() => submit(d.name, d.id)} variant="outlined" sx={{ bgcolor: 'background.paper' }} />
           ))}
-        </ul>
+        </Stack>
       )}
     </div>
   )

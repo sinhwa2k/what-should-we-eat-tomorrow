@@ -1,4 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AppBar, Box, Container, Tab, Tabs, Toolbar, Typography } from '@mui/material'
 import { configured } from './lib/supabase'
 import { toISO } from './lib/date'
 import DayPage from './pages/DayPage'
@@ -14,38 +15,41 @@ const TABS = [
   { to: '/dishes', match: '/dish', text: '메뉴' },
 ]
 
-function Tabs() {
+function Header() {
   const { pathname } = useLocation()
+  const index = TABS.findIndex((t) =>
+    t.to === '/' ? pathname === '/' || pathname.startsWith('/day') : pathname.startsWith(t.match),
+  )
   return (
-    <nav className="sticky top-0 z-10 flex border-b bg-white">
-      {TABS.map((t) => {
-        const active = t.to === '/' ? pathname === '/' || pathname.startsWith('/day') : pathname.startsWith(t.match)
-        return (
-          <Link
-            key={t.to}
-            to={t.to}
-            className={`flex-1 py-3 text-center text-sm ${active ? 'border-b-2 border-orange-500 font-bold text-orange-600' : 'text-gray-500'}`}
-          >
-            {t.text}
-          </Link>
-        )
-      })}
-    </nav>
+    <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Container maxWidth="sm" disableGutters>
+        <Toolbar variant="dense">
+          <Typography variant="h6" color="primary">
+            내일뭐먹지
+          </Typography>
+        </Toolbar>
+        <Tabs value={index === -1 ? false : index} variant="fullWidth">
+          {TABS.map((t) => (
+            <Tab key={t.to} label={t.text} component={Link} to={t.to} />
+          ))}
+        </Tabs>
+      </Container>
+    </AppBar>
   )
 }
 
 export default function App() {
   if (!configured) {
     return (
-      <p className="p-6 text-sm">
+      <Typography sx={{ p: 3 }}>
         .env에 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY를 설정해주세요.
-      </p>
+      </Typography>
     )
   }
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
-      <Tabs />
-      <main className="flex-1 p-4">
+    <Box sx={{ minHeight: '100dvh' }}>
+      <Header />
+      <Container maxWidth="sm" sx={{ py: 2 }}>
         <Routes>
           <Route path="/" element={<Navigate to={`/day/${toISO(new Date())}`} replace />} />
           <Route path="/day/:date" element={<DayPage />} />
@@ -56,7 +60,7 @@ export default function App() {
           <Route path="/dishes" element={<DishesPage />} />
           <Route path="/dish/:id" element={<DishPage />} />
         </Routes>
-      </main>
-    </div>
+      </Container>
+    </Box>
   )
 }

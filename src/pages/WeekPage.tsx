@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Alert, Box, Card, CardActionArea, CardContent, Typography } from '@mui/material'
 import { getRange } from '../lib/api'
 import { fromISO, label, shift, toISO } from '../lib/date'
+import { Pager } from '../components'
 import type { MealPlan, Slot } from '../lib/types'
 
 const SLOTS: { slot: Slot; icon: string }[] = [
@@ -19,7 +21,7 @@ export default function WeekPage() {
   const days = Array.from({ length: 7 }, (_, i) => shift(start, i))
   const [plans, setPlans] = useState<MealPlan[]>([])
   const [error, setError] = useState('')
-  const todayRef = useRef<HTMLAnchorElement>(null)
+  const todayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     todayRef.current?.scrollIntoView({ inline: 'center', block: 'nearest' })
@@ -36,44 +38,56 @@ export default function WeekPage() {
 
   return (
     <div>
-      <header className="mb-3 flex items-center justify-between">
-        <button className="p-2 text-2xl" onClick={() => nav(`/week/${shift(start, -7)}`)}>‹</button>
-        <h1 className="text-lg font-bold">{label(start)} ~ {label(end)}</h1>
-        <button className="p-2 text-2xl" onClick={() => nav(`/week/${shift(start, 7)}`)}>›</button>
-      </header>
-      {start !== shift(today, -fromISO(today).getDay()) && (
-        <div className="mb-3 text-center">
-          <button className="rounded-full border px-3 py-1 text-sm" onClick={() => nav('/week')}>오늘로</button>
-        </div>
-      )}
-      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-      <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-2">
-        {days.map((d) => (
-          <Link
-            key={d}
-            ref={d === today ? todayRef : undefined}
-            to={`/day/${d}`}
-            className={`w-32 shrink-0 snap-start rounded-2xl border p-3 ${d === today ? 'border-orange-400 bg-orange-50' : 'bg-white'}`}
-          >
-            <div className={`mb-2 border-b pb-1 text-center font-bold ${d === today ? 'text-orange-600' : ''}`}>{label(d)}</div>
-            {SLOTS.map(({ slot, icon }) => {
-              const items = plans.find((p) => p.date === d && p.slot === slot)?.meal_items ?? []
-              return (
-                <div key={slot} className="mb-3 last:mb-0">
-                  <div className="mb-1 text-xs">{icon}</div>
-                  {items.length ? (
-                    items.map((it) => (
-                      <p key={it.id} className="break-words py-0.5 text-sm leading-snug">{it.label}</p>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-300">-</p>
-                  )}
-                </div>
-              )
-            })}
-          </Link>
-        ))}
-      </div>
+      <Pager
+        title={`${label(start)} ~ ${label(end)}`}
+        onPrev={() => nav(`/week/${shift(start, -7)}`)}
+        onNext={() => nav(`/week/${shift(start, 7)}`)}
+        onToday={start !== shift(today, -fromISO(today).getDay()) ? () => nav('/week') : undefined}
+      />
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', mx: -2, px: 2, pb: 1, scrollSnapType: 'x proximity' }}>
+        {days.map((d) => {
+          const isToday = d === today
+          return (
+            <Card
+              key={d}
+              ref={isToday ? todayRef : undefined}
+              variant={isToday ? 'elevation' : 'outlined'}
+              sx={{ width: 132, flexShrink: 0, scrollSnapAlign: 'start', bgcolor: isToday ? '#fff3e0' : 'background.paper' }}
+            >
+              <CardActionArea component={Link} to={`/day/${d}`} sx={{ height: '100%', alignItems: 'flex-start' }}>
+                <CardContent>
+                  <Typography
+                    color={isToday ? 'primary' : 'text.primary'}
+                    sx={{ fontWeight: 700, textAlign: 'center', pb: 1, mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
+                  >
+                    {label(d)}
+                  </Typography>
+                  {SLOTS.map(({ slot, icon }) => {
+                    const items = plans.find((p) => p.date === d && p.slot === slot)?.meal_items ?? []
+                    return (
+                      <Box key={slot} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
+                        <Typography variant="caption">{icon}</Typography>
+                        {items.length ? (
+                          items.map((it) => (
+                            <Typography key={it.id} variant="body2" sx={{ py: 0.25, wordBreak: 'break-word' }}>
+                              {it.label}
+                            </Typography>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.disabled">
+                            -
+                          </Typography>
+                        )}
+                      </Box>
+                    )
+                  })}
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          )
+        })}
+      </Box>
     </div>
   )
 }

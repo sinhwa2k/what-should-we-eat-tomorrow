@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  Avatar,
+  Card,
+  InputAdornment,
+  List,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemText,
+  TextField,
+  Typography,
+} from '@mui/material'
+import Search from '@mui/icons-material/Search'
+import RestaurantMenu from '@mui/icons-material/RestaurantMenu'
 import { listDishes } from '../lib/api'
 import type { Dish } from '../lib/types'
 
@@ -14,26 +27,40 @@ export default function DishesPage() {
 
   return (
     <div>
-      <h1 className="mb-3 text-xl font-bold">메뉴</h1>
-      <input
-        className="mb-3 w-full rounded-xl border px-3 py-2"
-        placeholder="검색"
+      <TextField
+        fullWidth
+        placeholder="메뉴 검색"
         value={q}
         onChange={(e) => setQ(e.target.value)}
+        sx={{ mb: 2 }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          },
+        }}
       />
-      <ul className="space-y-2">
-        {dishes.map((d) => (
-          <li key={d.id}>
-            <Link to={`/dish/${d.id}`} className="flex items-center justify-between rounded-xl border px-4 py-3">
-              <span className="flex items-center gap-3">
-                {d.photo_url && <img src={d.photo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />}
-                {d.name}
-              </span>
-              {d.recipe && <span className="text-xs text-gray-400">레시피 있음</span>}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {dishes.length === 0 ? (
+        <Typography color="text.secondary">메뉴가 없어요.</Typography>
+      ) : (
+        <Card variant="outlined">
+          <List disablePadding>
+            {dishes.map((d) => (
+              <ListItemButton key={d.id} component={Link} to={`/dish/${d.id}`}>
+                <ListItemAvatar>
+                  <Avatar src={d.photo_url ?? undefined} variant="rounded" sx={{ bgcolor: 'primary.light' }}>
+                    <RestaurantMenu />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary={d.name} secondary={d.recipe ? '레시피 있음' : undefined} />
+              </ListItemButton>
+            ))}
+          </List>
+        </Card>
+      )}
     </div>
   )
 }
