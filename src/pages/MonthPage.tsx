@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Box, Paper, Typography } from '@mui/material'
 import { getRange } from '../lib/api'
 import { toISO } from '../lib/date'
 import { Pager } from '../components'
-import type { MealPlan } from '../lib/types'
+import { useQuery } from '../lib/cache'
 
 const HEAD = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -13,22 +12,12 @@ export default function MonthPage() {
   const { ym } = useParams()
   const now = new Date()
   const [y, m] = (ym ?? `${now.getFullYear()}-${now.getMonth() + 1}`).split('-').map(Number)
-  const [plans, setPlans] = useState<MealPlan[]>([])
-  const [error, setError] = useState('')
-
   const first = new Date(y, m - 1, 1)
   const last = new Date(y, m, 0)
   const from = toISO(first)
   const to = toISO(last)
 
-  useEffect(() => {
-    getRange(from, to)
-      .then((p) => {
-        setPlans(p)
-        setError('')
-      })
-      .catch((e) => setError(e.message))
-  }, [from, to])
+  const { data: plans, error } = useQuery(`range:${from}:${to}`, () => getRange(from, to))
 
   const go = (delta: number) => {
     const d = new Date(y, m - 1 + delta, 1)
@@ -60,7 +49,7 @@ export default function MonthPage() {
           const date = toISO(new Date(y, m - 1, day))
           const isToday = date === today
           const names = (slot: string) =>
-            plans.find((p) => p.date === date && p.slot === slot)?.meal_items.map((it) => it.label) ?? []
+            plans?.find((p) => p.date === date && p.slot === slot)?.meal_items.map((it) => it.label) ?? []
           return (
             <Box
               key={i}

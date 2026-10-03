@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -20,8 +20,9 @@ import Add from '@mui/icons-material/Add'
 import { addItem, createDish, getDay, listDishes, removeItem } from '../lib/api'
 import { label, shift, toISO } from '../lib/date'
 import { useConfirm } from '../lib/confirm'
+import { useQuery } from '../lib/cache'
 import { Pager } from '../components'
-import type { Dish, MealPlan, Slot } from '../lib/types'
+import type { Dish, Slot } from '../lib/types'
 
 const SLOTS: { slot: Slot; title: string }[] = [
   { slot: 'lunch', title: '🌞 점심' },
@@ -32,21 +33,7 @@ export default function DayPage() {
   const { date = '' } = useParams()
   const nav = useNavigate()
   const confirm = useConfirm()
-  const [plans, setPlans] = useState<MealPlan[]>([])
-  const [error, setError] = useState('')
-
-  const load = useCallback(async () => {
-    try {
-      setPlans(await getDay(date))
-      setError('')
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }, [date])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const { data: plans, error, reload: load } = useQuery(`day:${date}`, () => getDay(date))
 
   const today = toISO(new Date())
 
@@ -61,7 +48,7 @@ export default function DayPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Stack spacing={2}>
         {SLOTS.map(({ slot, title }) => {
-          const items = plans.find((p) => p.slot === slot)?.meal_items ?? []
+          const items = plans?.find((p) => p.slot === slot)?.meal_items ?? []
           return (
             <Card key={slot} sx={{ bgcolor: 'primary.50', backgroundColor: '#fff3e0' }}>
               <CardContent>
@@ -97,7 +84,7 @@ export default function DayPage() {
                       )}
                     </ListItem>
                   ))}
-                  {items.length === 0 && (
+                  {plans && items.length === 0 && (
                     <Typography variant="body2" color="text.secondary">
                       비어 있음
                     </Typography>

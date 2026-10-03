@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Box, Card, CardActionArea, CardContent, Typography } from '@mui/material'
 import { getRange } from '../lib/api'
 import { fromISO, label, shift, toISO } from '../lib/date'
 import { Pager } from '../components'
-import type { MealPlan, Slot } from '../lib/types'
+import { useQuery } from '../lib/cache'
+import type { Slot } from '../lib/types'
 
 const SLOTS: { slot: Slot; icon: string }[] = [
   { slot: 'lunch', icon: '🌞' },
@@ -19,22 +20,12 @@ export default function WeekPage() {
   const start = shift(base, -fromISO(base).getDay())
   const end = shift(start, 6)
   const days = Array.from({ length: 7 }, (_, i) => shift(start, i))
-  const [plans, setPlans] = useState<MealPlan[]>([])
-  const [error, setError] = useState('')
+  const { data: plans, error } = useQuery(`range:${start}`, () => getRange(start, end))
   const todayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     todayRef.current?.scrollIntoView({ inline: 'center', block: 'nearest' })
   }, [start])
-
-  useEffect(() => {
-    getRange(start, end)
-      .then((p) => {
-        setPlans(p)
-        setError('')
-      })
-      .catch((e) => setError(e.message))
-  }, [start, end])
 
   return (
     <div>
@@ -64,7 +55,7 @@ export default function WeekPage() {
                     {label(d)}
                   </Typography>
                   {SLOTS.map(({ slot, icon }) => {
-                    const items = plans.find((p) => p.date === d && p.slot === slot)?.meal_items ?? []
+                    const items = plans?.find((p) => p.date === d && p.slot === slot)?.meal_items ?? []
                     return (
                       <Box key={slot} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
                         <Typography variant="caption">{icon}</Typography>

@@ -14,14 +14,16 @@ import {
 import Search from '@mui/icons-material/Search'
 import RestaurantMenu from '@mui/icons-material/RestaurantMenu'
 import { listDishes } from '../lib/api'
-import type { Dish } from '../lib/types'
+import { useQuery } from '../lib/cache'
 
 export default function DishesPage() {
   const [q, setQ] = useState('')
-  const [dishes, setDishes] = useState<Dish[]>([])
+  const [dq, setDq] = useState('')
+  const { data } = useQuery(`dishes:${dq}`, () => listDishes(dq))
+  const dishes = data
 
   useEffect(() => {
-    const t = setTimeout(() => listDishes(q).then(setDishes).catch(() => setDishes([])), 200)
+    const t = setTimeout(() => setDq(q), 200)
     return () => clearTimeout(t)
   }, [q])
 
@@ -43,7 +45,7 @@ export default function DishesPage() {
           },
         }}
       />
-      {dishes.length === 0 ? (
+      {dishes === undefined ? null : dishes.length === 0 ? (
         <Typography color="text.secondary">메뉴가 없어요.</Typography>
       ) : (
         <Card variant="outlined">

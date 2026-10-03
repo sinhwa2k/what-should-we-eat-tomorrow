@@ -8,6 +8,7 @@ import AddAPhoto from '@mui/icons-material/AddAPhoto'
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined'
 import { deleteDish, getDish, updateDish, uploadPhoto } from '../lib/api'
 import { useConfirm } from '../lib/confirm'
+import { readCache, writeCache } from '../lib/cache'
 import type { Dish } from '../lib/types'
 
 const FIELDS: { key: 'ingredients' | 'recipe' | 'memo'; title: string; rows: number }[] = [
@@ -20,13 +21,19 @@ export default function DishPage() {
   const { id = '' } = useParams()
   const nav = useNavigate()
   const confirm = useConfirm()
-  const [dish, setDish] = useState<Dish | null>(null)
+  const key = `dish:${id}`
+  const [dish, setDish] = useState<Dish | null>(() => readCache<Dish>(key) ?? null)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getDish(id).then(setDish).catch((e) => setError(e.message))
-  }, [id])
+    getDish(id)
+      .then((d) => {
+        writeCache(key, d)
+        setDish(d)
+      })
+      .catch((e) => setError(e.message))
+  }, [id, key])
 
   if (!dish && error) return <Alert severity="error">{error}</Alert>
   if (!dish) return <Typography>불러오는 중…</Typography>
@@ -40,6 +47,7 @@ export default function DishPage() {
         recipe: dish.recipe,
         memo: dish.memo,
       })
+      writeCache(key, dish)
       setEditing(false)
       setError('')
     } catch (e) {
@@ -96,7 +104,9 @@ export default function DishPage() {
               if (!f) return
               try {
                 const url = await uploadPhoto(dish.id, f)
-                setDish({ ...dish, photo_url: url })
+                const next = { ...dish, photo_url: url }
+                writeCache(key, next)
+                setDish(next)
               } catch (err) {
                 setError((err as Error).message)
               }
