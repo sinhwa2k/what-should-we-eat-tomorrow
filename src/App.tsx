@@ -6,11 +6,9 @@ import DayPage from './pages/DayPage'
 import DishesPage from './pages/DishesPage'
 import DishPage from './pages/DishPage'
 import MonthPage from './pages/MonthPage'
-import WeekPage from './pages/WeekPage'
 
 const TABS = [
   { to: '/', match: '/day', text: '일별' },
-  { to: '/week', match: '/week', text: '주별' },
   { to: '/month', match: '/month', text: '월별' },
   { to: '/dishes', match: '/dish', text: '메뉴' },
 ]
@@ -55,8 +53,6 @@ export default function App() {
           <Route path="/day/:date" element={<DayPage />} />
           <Route path="/month" element={<MonthPage />} />
           <Route path="/month/:ym" element={<MonthPage />} />
-          <Route path="/week" element={<WeekPage />} />
-          <Route path="/week/:date" element={<WeekPage />} />
           <Route path="/dishes" element={<DishesPage />} />
           <Route path="/dish/:id" element={<DishPage />} />
         </Routes>
