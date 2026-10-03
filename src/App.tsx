@@ -9,8 +9,8 @@ import WeekPage from './pages/WeekPage'
 
 const TABS = [
   { to: '/', match: '/day', text: '일별' },
-  { to: '/month', match: '/month', text: '월별' },
   { to: '/week', match: '/week', text: '주별' },
+  { to: '/month', match: '/month', text: '월별' },
   { to: '/dishes', match: '/dish', text: '메뉴' },
 ]
 
