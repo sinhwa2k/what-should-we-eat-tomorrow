@@ -11,8 +11,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: '내일머먹지',
-        short_name: '내일머먹지',
+        name: '내일뭐먹지',
+        short_name: '내일뭐먹지',
         display: 'standalone',
         start_url: './',
         background_color: '#ffffff',
