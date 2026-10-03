@@ -63,37 +63,38 @@ export default function DishPage() {
             <IconButton edge="start" aria-label="뒤로" onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav('/'))}>
               <ArrowBack />
             </IconButton>
-            <Typography variant="h6" noWrap sx={{ flex: 1, mx: 1 }}>
-              {dish.name}
+            <Typography variant="h6" color="primary" sx={{ ml: 1 }}>
+              내일뭐먹지
             </Typography>
-            {editing ? (
-              <Button variant="contained" startIcon={<Save />} onClick={save}>
-                저장
-              </Button>
-            ) : (
-              <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)}>
-                편집
-              </Button>
-            )}
           </Toolbar>
         </Container>
       </AppBar>
       <Container maxWidth="sm" sx={{ py: 2 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {editing ? (
-        <TextField
-          fullWidth
-          label="메뉴 이름"
-          value={dish.name}
-          onChange={(e) => setDish({ ...dish, name: e.target.value })}
-          sx={{ mb: 2 }}
-        />
-      ) : (
-        <Typography variant="h4" sx={{ mb: 2 }}>
-          {dish.name}
-        </Typography>
-      )}
+      <Stack direction="row" spacing={1} sx={{ mb: 2, alignItems: 'center' }}>
+        {editing ? (
+          <TextField
+            fullWidth
+            label="메뉴 이름"
+            value={dish.name}
+            onChange={(e) => setDish({ ...dish, name: e.target.value })}
+          />
+        ) : (
+          <Typography variant="h4" sx={{ flex: 1, wordBreak: 'break-word' }}>
+            {dish.name}
+          </Typography>
+        )}
+        {editing ? (
+          <Button variant="contained" startIcon={<Save />} onClick={save} sx={{ flexShrink: 0 }}>
+            저장
+          </Button>
+        ) : (
+          <Button variant="outlined" startIcon={<Edit />} onClick={() => setEditing(true)} sx={{ flexShrink: 0 }}>
+            편집
+          </Button>
+        )}
+      </Stack>
 
       {dish.photo_url && (
         <Card variant="outlined" sx={{ mb: 2 }}>
