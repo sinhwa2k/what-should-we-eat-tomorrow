@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
+  Avatar,
   Button,
   Card,
   CardContent,
@@ -9,6 +10,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemAvatar,
   ListItemButton,
   ListItemText,
   Stack,
@@ -17,6 +19,7 @@ import {
 } from '@mui/material'
 import Close from '@mui/icons-material/Close'
 import Add from '@mui/icons-material/Add'
+import RestaurantMenu from '@mui/icons-material/RestaurantMenu'
 import { addItem, createDish, getDay, listDishes, removeItem } from '../lib/api'
 import { label, shift, toISO } from '../lib/date'
 import { useConfirm } from '../lib/confirm'
@@ -78,7 +81,12 @@ export default function DayPage() {
                       }
                     >
                       {it.dish_id ? (
-                        <ListItemButton component={Link} to={`/dish/${it.dish_id}`} sx={{ borderRadius: 3 }}>
+                        <ListItemButton component={Link} to={`/dish/${it.dish_id}`} sx={{ borderRadius: 3, pr: 7 }}>
+                          <ListItemAvatar>
+                            <Avatar src={it.dishes?.photo_url ?? undefined} variant="rounded" sx={{ width: 48, height: 48, bgcolor: 'primary.light' }}>
+                              <RestaurantMenu />
+                            </Avatar>
+                          </ListItemAvatar>
                           <ListItemText primary={it.label} slotProps={{ primary: { sx: { fontSize: 18 } } }} />
                         </ListItemButton>
                       ) : (

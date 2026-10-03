@@ -15,6 +15,7 @@ export interface MealItem {
   dish_id: string | null
   label: string
   position: number
+  dishes?: { photo_url: string | null } | null
 }
 
 export interface MealPlan {

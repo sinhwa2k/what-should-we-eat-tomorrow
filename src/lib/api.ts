@@ -9,7 +9,7 @@ function check<T>(res: { data: T; error: { message: string } | null }): NonNulla
 export async function getDay(date: string): Promise<MealPlan[]> {
   const res = await supabase
     .from('meal_plans')
-    .select('*, meal_items(*)')
+    .select('*, meal_items(*, dishes(photo_url))')
     .eq('date', date)
   const plans = check(res) as MealPlan[]
   plans.forEach((p) => p.meal_items.sort((a, b) => a.position - b.position))
