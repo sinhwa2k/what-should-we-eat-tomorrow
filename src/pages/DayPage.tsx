@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { addItem, createDish, getDay, listDishes, removeItem } from '../lib/api'
-import { label, shift } from '../lib/date'
+import { label, shift, toISO } from '../lib/date'
 import type { Dish, MealPlan, Slot } from '../lib/types'
 
 const SLOTS: { slot: Slot; title: string }[] = [
@@ -35,6 +35,11 @@ export default function DayPage() {
         <h1 className="text-xl font-bold">{label(date)}</h1>
         <button className="p-2 text-2xl" onClick={() => nav(`/day/${shift(date, 1)}`)}>›</button>
       </header>
+      {date !== toISO(new Date()) && (
+        <div className="mb-3 text-center">
+          <button className="rounded-full border px-3 py-1 text-sm" onClick={() => nav(`/day/${toISO(new Date())}`)}>오늘로</button>
+        </div>
+      )}
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       <div className="space-y-4">
         {SLOTS.map(({ slot, title }) => {

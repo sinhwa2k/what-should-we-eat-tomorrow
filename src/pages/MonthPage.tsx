@@ -46,8 +46,13 @@ export default function MonthPage() {
         <h1 className="text-xl font-bold">{y}년 {m}월</h1>
         <button className="p-2 text-2xl" onClick={() => go(1)}>›</button>
       </header>
+      {!(y === now.getFullYear() && m === now.getMonth() + 1) && (
+        <div className="mb-3 text-center">
+          <button className="rounded-full border px-3 py-1 text-sm" onClick={() => nav('/month')}>오늘로</button>
+        </div>
+      )}
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-gray-200 text-xs">
+      <div className="grid grid-cols-7 items-stretch gap-px overflow-hidden rounded-xl border bg-gray-200 text-xs">
         {HEAD.map((h) => (
           <div key={h} className="bg-gray-50 py-1 text-center font-bold">{h}</div>
         ))}
@@ -60,12 +65,20 @@ export default function MonthPage() {
             <Link
               key={i}
               to={`/day/${date}`}
-              className={`min-h-24 bg-white p-1 ${date === today ? 'bg-orange-50' : ''}`}
+              className={`min-h-24 min-w-0 bg-white p-1 ${date === today ? 'bg-orange-50' : ''}`}
             >
               <div className={`font-bold ${date === today ? 'text-orange-600' : ''}`}>{day}</div>
-              <div className="leading-tight text-gray-600">
-                {names('lunch').length > 0 && <p className="truncate">🌞 {names('lunch').join(', ')}</p>}
-                {names('dinner').length > 0 && <p className="truncate">🌙 {names('dinner').join(', ')}</p>}
+              <div className="space-y-1 text-[11px] leading-tight text-gray-600">
+                {(['lunch', 'dinner'] as const).map((slot) =>
+                  names(slot).length > 0 ? (
+                    <div key={slot}>
+                      <span>{slot === 'lunch' ? '🌞' : '🌙'}</span>
+                      {names(slot).map((n, k) => (
+                        <p key={k} className="break-words">{n}</p>
+                      ))}
+                    </div>
+                  ) : null,
+                )}
               </div>
             </Link>
           )
