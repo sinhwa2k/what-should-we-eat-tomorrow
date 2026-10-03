@@ -1,0 +1,14 @@
+name: Supabase keepalive
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -fsS "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/dishes?select=id&limit=1" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}"
