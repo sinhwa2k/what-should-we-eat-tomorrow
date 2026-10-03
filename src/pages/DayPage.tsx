@@ -20,6 +20,7 @@ import Add from '@mui/icons-material/Add'
 import { addItem, createDish, getDay, listDishes, removeItem } from '../lib/api'
 import { label, shift, toISO } from '../lib/date'
 import { useConfirm } from '../lib/confirm'
+import { useSwipe } from '../lib/swipe'
 import { useQuery } from '../lib/cache'
 import { Pager } from '../components'
 import type { Dish, Slot } from '../lib/types'
@@ -36,9 +37,10 @@ export default function DayPage() {
   const { data: plans, error, reload: load } = useQuery(`day:${date}`, () => getDay(date))
 
   const today = toISO(new Date())
+  const swipe = useSwipe(() => nav(`/day/${shift(date, -1)}`), () => nav(`/day/${shift(date, 1)}`))
 
   return (
-    <div>
+    <div {...swipe} style={{ minHeight: '75dvh' }}>
       <Pager
         title={label(date)}
         onPrev={() => nav(`/day/${shift(date, -1)}`)}

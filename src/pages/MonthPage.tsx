@@ -4,6 +4,7 @@ import { getRange } from '../lib/api'
 import { toISO } from '../lib/date'
 import { Pager } from '../components'
 import { useQuery } from '../lib/cache'
+import { useSwipe } from '../lib/swipe'
 
 const HEAD = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -24,6 +25,8 @@ export default function MonthPage() {
     nav(`/month/${d.getFullYear()}-${d.getMonth() + 1}`)
   }
 
+  const swipe = useSwipe(() => go(-1), () => go(1))
+
   const cells: (number | null)[] = [
     ...Array(first.getDay()).fill(null),
     ...Array.from({ length: last.getDate() }, (_, i) => i + 1),
@@ -32,7 +35,7 @@ export default function MonthPage() {
   const isCurrent = y === now.getFullYear() && m === now.getMonth() + 1
 
   return (
-    <div>
+    <div {...swipe} style={{ minHeight: '75dvh' }}>
       <Pager title={`${y}년 ${m}월`} onPrev={() => go(-1)} onNext={() => go(1)} onToday={isCurrent ? undefined : () => nav('/month')} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Paper
