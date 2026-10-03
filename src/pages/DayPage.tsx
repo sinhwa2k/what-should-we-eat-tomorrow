@@ -59,6 +59,7 @@ export default function DayPage() {
                       className="px-2 text-gray-400"
                       aria-label="삭제"
                       onClick={async () => {
+                        if (!confirm(`'${it.label}'을(를) 식단에서 삭제할까요?`)) return
                         await removeItem(it.id)
                         load()
                       }}
