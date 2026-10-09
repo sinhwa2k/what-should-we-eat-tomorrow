@@ -1,4 +1,5 @@
-import { Button, IconButton, Stack, Typography } from '@mui/material'
+import { Fragment } from 'react'
+import { Button, IconButton, Link, Stack, Typography } from '@mui/material'
 import ChevronLeft from '@mui/icons-material/ChevronLeft'
 import ChevronRight from '@mui/icons-material/ChevronRight'
 import Today from '@mui/icons-material/Today'
@@ -33,5 +34,28 @@ export function Pager({
         </Button>
       )}
     </Stack>
+  )
+}
+
+const URL_RE = /(https?:\/\/[^\s]+)/g
+
+// plain text with clickable links that open in a new tab
+export function Linkify({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(URL_RE).map((part, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{part}</Fragment>
+        const url = part.replace(/[)\].,!?;:'"]+$/, '')
+        const rest = part.slice(url.length)
+        return (
+          <Fragment key={i}>
+            <Link href={url} target="_blank" rel="noopener noreferrer" sx={{ wordBreak: 'break-all' }}>
+              {url}
+            </Link>
+            {rest}
+          </Fragment>
+        )
+      })}
+    </>
   )
 }

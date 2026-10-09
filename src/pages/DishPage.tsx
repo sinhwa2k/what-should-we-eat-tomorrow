@@ -8,6 +8,7 @@ import AddAPhoto from '@mui/icons-material/AddAPhoto'
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined'
 import { deleteDish, getDish, updateDish, uploadPhoto } from '../lib/api'
 import { useConfirm } from '../lib/confirm'
+import { Linkify } from '../components'
 import { readCache, writeCache } from '../lib/cache'
 import type { Dish } from '../lib/types'
 
@@ -140,7 +141,7 @@ export default function DishPage() {
                 />
               ) : (
                 <Box sx={{ whiteSpace: 'pre-wrap', fontSize: 18, lineHeight: 1.7 }}>
-                  {dish[key] || <Typography color="text.disabled">없음</Typography>}
+                  {dish[key] ? <Linkify text={dish[key]} /> : <Typography color="text.disabled">없음</Typography>}
                 </Box>
               )}
             </CardContent>
