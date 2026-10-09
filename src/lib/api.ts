@@ -72,33 +72,60 @@ export async function getRange(from: string, to: string): Promise<MealPlan[]> {
   return plans
 }
 
-// decode through <img>: browsers apply EXIF rotation there (createImageBitmap on Safari may not)
-function loadImage(file: File): Promise<HTMLImageElement> {
-  const url = URL.createObjectURL(file)
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      resolve(img)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('이미지를 읽을 수 없어요'))
-    }
-    img.src = url
-  })
+const MAX_SIDE = 1280
+
+// returns null when the canvas came out blank (iOS Safari can do that)
+async function draw(source: CanvasImageSource, w: number, h: number): Promise<Blob | null> {
+  const scale = Math.min(1, MAX_SIDE / Math.max(w, h))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(w * scale)
+  canvas.height = Math.round(h * scale)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
+
+  const probe = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+  let lit = 0
+  for (let i = 0; i < probe.length; i += 4 * 97) {
+    if (probe[i] + probe[i + 1] + probe[i + 2] > 30) lit++
+  }
+  if (lit === 0) return null
+
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.8))
 }
 
-async function resize(file: File, max = 1280): Promise<Blob> {
-  const img = await loadImage(file)
-  const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight))
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.round(img.naturalWidth * scale)
-  canvas.height = Math.round(img.naturalHeight * scale)
-  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('이미지 변환 실패'))), 'image/jpeg', 0.8),
-  )
+// <img> applies EXIF rotation in every modern browser; keep the object URL alive until drawn
+async function viaImg(file: File): Promise<Blob | null> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    return await draw(img, img.naturalWidth, img.naturalHeight)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+async function viaBitmap(file: File): Promise<Blob | null> {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  try {
+    return await draw(bmp, bmp.width, bmp.height)
+  } finally {
+    bmp.close()
+  }
+}
+
+async function resize(file: File): Promise<Blob> {
+  for (const attempt of [viaImg, viaBitmap]) {
+    try {
+      const blob = await attempt(file)
+      if (blob) return blob
+    } catch {
+      // try the next decoder
+    }
+  }
+  return file // last resort: upload the original
 }
 
 export async function uploadPhoto(dishId: string, file: File): Promise<string> {
@@ -106,7 +133,7 @@ export async function uploadPhoto(dishId: string, file: File): Promise<string> {
   const path = `${dishId}/${Date.now()}.jpg`
   const { error } = await supabase.storage
     .from('dish-photos')
-    .upload(path, blob, { contentType: 'image/jpeg' })
+    .upload(path, blob, { contentType: blob.type || 'image/jpeg' })
   if (error) throw new Error(error.message)
   const url = supabase.storage.from('dish-photos').getPublicUrl(path).data.publicUrl
   await updateDish(dishId, { photo_url: url })
