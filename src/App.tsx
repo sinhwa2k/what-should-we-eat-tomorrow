@@ -22,7 +22,13 @@ function Header() {
     <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
       <Container maxWidth="sm" disableGutters>
         <Toolbar variant="dense">
-          <Typography variant="h6" color="primary">
+          <Typography
+            variant="h6"
+            color="primary"
+            component={Link}
+            to="/"
+            sx={{ textDecoration: 'none' }}
+          >
             내일뭐먹지
           </Typography>
         </Toolbar>
