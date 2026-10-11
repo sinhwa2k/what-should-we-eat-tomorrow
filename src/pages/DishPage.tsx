@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Alert, AppBar, Autocomplete, Box, Button, Card, CardContent, CardMedia, Chip, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
+import { Alert, AppBar, Box, Button, Card, CardContent, CardMedia, Chip, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
 import ArrowBack from '@mui/icons-material/ArrowBack'
 import Edit from '@mui/icons-material/Edit'
 import Save from '@mui/icons-material/Save'
@@ -92,14 +92,10 @@ export default function DishPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {editing ? (
-        <Autocomplete
-          multiple
-          freeSolo
+        <TagEditor
           options={tagOptions}
           value={dish.tags ?? []}
-          onChange={(_, v) => setDish({ ...dish, tags: [...new Set(v.map((t) => t.trim()).filter(Boolean))] })}
-          renderInput={(params) => <TextField {...params} label="태그 (입력 후 엔터)" />}
-          sx={{ mb: 2 }}
+          onChange={(tags) => setDish({ ...dish, tags })}
         />
       ) : (
         (dish.tags ?? []).length > 0 && (
@@ -190,5 +186,67 @@ export default function DishPage() {
       )}
       </Container>
     </>
+  )
+}
+
+function TagEditor({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[]
+  value: string[]
+  onChange: (tags: string[]) => void
+}) {
+  const [text, setText] = useState('')
+  const all = [...new Set([...options, ...value])]
+
+  const toggle = (t: string) => onChange(value.includes(t) ? value.filter((v) => v !== t) : [...value, t])
+
+  function add() {
+    const t = text.trim()
+    if (!t) return
+    if (!value.includes(t)) onChange([...value, t])
+    setText('')
+  }
+
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        태그
+      </Typography>
+      <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+        {all.map((t) => (
+          <Chip
+            key={t}
+            label={t}
+            color={value.includes(t) ? 'primary' : 'default'}
+            variant={value.includes(t) ? 'filled' : 'outlined'}
+            onClick={() => toggle(t)}
+          />
+        ))}
+      </Stack>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          add()
+        }}
+      >
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="새 태그 이름"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={add}
+            slotProps={{ htmlInput: { enterKeyHint: 'done' } }}
+          />
+          <Button type="submit" variant="outlined" disabled={!text.trim()} sx={{ flexShrink: 0 }}>
+            태그 추가
+          </Button>
+        </Stack>
+      </form>
+    </Box>
   )
 }
