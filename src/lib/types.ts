@@ -7,6 +7,7 @@ export interface Dish {
   ingredients: string | null
   recipe: string | null
   memo: string | null
+  tags: string[]
 }
 
 export interface MealItem {

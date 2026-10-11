@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Avatar,
   Button,
   Card,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Fab,
+  Stack,
   InputAdornment,
   List,
   ListItemAvatar,
@@ -29,14 +31,14 @@ export default function DishesPage() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
-  const [dq, setDq] = useState('')
-  const { data } = useQuery(`dishes:${dq}`, () => listDishes(dq))
-  const dishes = data
+  const [tag, setTag] = useState<string | null>(null)
+  const { data: all } = useQuery('dishes:all', () => listDishes('', 1000))
 
-  useEffect(() => {
-    const t = setTimeout(() => setDq(q), 200)
-    return () => clearTimeout(t)
-  }, [q])
+  const tags = [...new Set((all ?? []).flatMap((d) => d.tags ?? []))].sort()
+  const needle = q.trim().toLowerCase()
+  const dishes = all?.filter(
+    (d) => (!tag || (d.tags ?? []).includes(tag)) && (!needle || d.name.toLowerCase().includes(needle)),
+  )
 
   async function add() {
     const n = name.trim()
@@ -60,7 +62,7 @@ export default function DishesPage() {
         placeholder="메뉴 검색"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        sx={{ mb: 2 }}
+        sx={{ mb: 1.5 }}
         slotProps={{
           input: {
             startAdornment: (
@@ -71,6 +73,19 @@ export default function DishesPage() {
           },
         }}
       />
+      {tags.length > 0 && (
+        <Stack direction="row" useFlexGap sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Chip label="전체" color={tag === null ? 'primary' : 'default'} onClick={() => setTag(null)} />
+          {tags.map((t) => (
+            <Chip
+              key={t}
+              label={t}
+              color={tag === t ? 'primary' : 'default'}
+              onClick={() => setTag(tag === t ? null : t)}
+            />
+          ))}
+        </Stack>
+      )}
       {dishes === undefined ? null : dishes.length === 0 ? (
         <Typography color="text.secondary">메뉴가 없어요.</Typography>
       ) : (
@@ -83,7 +98,7 @@ export default function DishesPage() {
                     <RestaurantMenu />
                   </Avatar>
                 </ListItemAvatar>
-                <ListItemText primary={d.name} secondary={d.recipe ? '레시피 있음' : undefined} />
+                <ListItemText primary={d.name} secondary={[...(d.tags ?? []).map((t) => `#${t}`), d.recipe ? '레시피 있음' : ''].filter(Boolean).join('  ') || undefined} />
               </ListItemButton>
             ))}
           </List>

@@ -5,6 +5,7 @@ create table dishes (
   ingredients text,
   recipe text,
   memo text,
+  tags text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 

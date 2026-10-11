@@ -39,8 +39,8 @@ export async function removeItem(id: string) {
   check(await supabase.from('meal_items').delete().eq('id', id))
 }
 
-export async function listDishes(q = ''): Promise<Dish[]> {
-  let query = supabase.from('dishes').select('*').order('name').limit(50)
+export async function listDishes(q = '', limit = 50): Promise<Dish[]> {
+  let query = supabase.from('dishes').select('*').order('name').limit(limit)
   if (q.trim()) query = query.ilike('name', `%${q.trim()}%`)
   return check(await query) as Dish[]
 }

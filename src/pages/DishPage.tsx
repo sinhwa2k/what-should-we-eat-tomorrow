@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Alert, AppBar, Box, Button, Card, CardContent, CardMedia, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
+import { Alert, AppBar, Autocomplete, Box, Button, Card, CardContent, CardMedia, Chip, Container, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material'
 import ArrowBack from '@mui/icons-material/ArrowBack'
 import Edit from '@mui/icons-material/Edit'
 import Save from '@mui/icons-material/Save'
@@ -11,6 +11,8 @@ import { useConfirm } from '../lib/confirm'
 import { Linkify } from '../components'
 import { readCache, writeCache } from '../lib/cache'
 import type { Dish } from '../lib/types'
+
+const DEFAULT_TAGS = ['요리', '외식']
 
 const FIELDS: { key: 'ingredients' | 'recipe' | 'memo'; title: string; rows: number }[] = [
   { key: 'ingredients', title: '재료', rows: 5 },
@@ -40,6 +42,8 @@ export default function DishPage() {
       .catch((e) => setError(e.message))
   }, [id, key])
 
+  const tagOptions = [...new Set([...DEFAULT_TAGS, ...(readCache<Dish[]>('dishes:all') ?? []).flatMap((d) => d.tags ?? [])])]
+
   if (!dish && error) return <Alert severity="error">{error}</Alert>
   if (!dish) return <Typography>불러오는 중…</Typography>
 
@@ -51,6 +55,7 @@ export default function DishPage() {
         ingredients: dish.ingredients,
         recipe: dish.recipe,
         memo: dish.memo,
+        tags: dish.tags,
       })
       writeCache(key, dish)
       setEditing(false)
@@ -86,6 +91,25 @@ export default function DishPage() {
       <Container maxWidth="sm" sx={{ pt: 2, pb: 12 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+      {editing ? (
+        <Autocomplete
+          multiple
+          freeSolo
+          options={tagOptions}
+          value={dish.tags ?? []}
+          onChange={(_, v) => setDish({ ...dish, tags: [...new Set(v.map((t) => t.trim()).filter(Boolean))] })}
+          renderInput={(params) => <TextField {...params} label="태그 (입력 후 엔터)" />}
+          sx={{ mb: 2 }}
+        />
+      ) : (
+        (dish.tags ?? []).length > 0 && (
+          <Stack direction="row" useFlexGap sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            {dish.tags.map((t) => (
+              <Chip key={t} label={t} color="primary" variant="outlined" />
+            ))}
+          </Stack>
+        )
+      )}
       {editing && (
         <TextField
           fullWidth
